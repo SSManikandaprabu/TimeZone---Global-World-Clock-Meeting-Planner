@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeZone - Global World Clock & Meeting Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(16, 185, 129, 0.3);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(16, 185, 129, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-brand-500 selection:text-white">
+
+    <header class="w-full border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <!-- Updated Logo Color and Shape: Vibrant Cyan-to-Indigo Gradient with Globe Icon -->
+                <div class="bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 p-2.5 rounded-xl shadow-lg shadow-cyan-500/25">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">TimeZone</h1>
+                    <p class="text-[11px] text-slate-400">Global World Clock & Meeting Suite</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="openAddModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-brand-600/20 flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    <span>Add City</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-1 w-full space-y-8">
+        
+        <!-- World Clocks Grid Section -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-white">World Clocks</h2>
+                    <p class="text-xs text-slate-400">Real-time local times and timezone offsets</p>
+                </div>
+                <span id="current-utc" class="px-3 py-1 bg-slate-900 border border-slate-800 rounded-xl text-xs font-mono text-brand-400">UTC --:--</span>
+            </div>
+
+            <div id="clocks-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Populated via JavaScript -->
+            </div>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 backdrop-blur shadow-xl space-y-6">
+            <div class="border-b border-slate-800/80 pb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-base font-bold text-white">Meeting Time Overlap Planner</h3>
+                    <p class="text-xs text-slate-400">Drag the slider to find optimal meeting hours across all timezones</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="planner-time-label" class="px-3.5 py-1.5 bg-brand-600/20 border border-brand-500/40 text-brand-400 font-mono text-xs font-bold rounded-xl">12:00 PM (Local)</span>
+                    <button onclick="resetPlannerTime()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition border border-slate-700">Now</button>
+                </div>
+            </div>
+
+            <!-- Time Slider -->
+            <div class="space-y-2">
+                <input type="range" id="meeting-slider" min="0" max="1439" value="720" oninput="updateMeetingPlanner(this.value)" class="w-full accent-brand-500 cursor-pointer bg-slate-800 rounded-lg h-2.5">
+                <div class="flex justify-between text-[10px] font-mono text-slate-500 px-1">
+                    <span>12:00 AM</span>
+                    <span>06:00 AM</span>
+                    <span>12:00 PM</span>
+                    <span>06:00 PM</span>
+                    <span>11:59 PM</span>
+                </div>
+            </div>
+
+            <!-- Planner Converted City Times -->
+            <div id="planner-results" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <div id="add-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-sm text-white">Add City to World Clock</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-white p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <form onsubmit="handleAddCity(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1.5">Select City / Timezone</label>
+                    <select id="new-city-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500 font-mono">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition shadow-lg shadow-brand-600/20">Add Clock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 right-6 z-50 bg-brand-600 text-white px-6 py-3 rounded-2xl shadow-2xl text-xs font-semibold border border-emerald-400/30 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        Notification message
+    </div>
+
+    <script>
+        const availableTimezones = [
+            { name: 'New York (USA)', zone: 'America/New_York', country: 'United States' },
+            { name: 'Los Angeles (USA)', zone: 'America/Los_Angeles', country: 'United States' },
+            { name: 'Chicago (USA)', zone: 'America/Chicago', country: 'United States' },
+            { name: 'London (UK)', zone: 'Europe/London', country: 'United Kingdom' },
+            { name: 'Paris (France)', zone: 'Europe/Paris', country: 'France' },
+            { name: 'Berlin (Germany)', zone: 'Europe/Berlin', country: 'Germany' },
+            { name: 'Tokyo (Japan)', zone: 'Asia/Tokyo', country: 'Japan' },
+            { name: 'Singapore', zone: 'Asia/Singapore', country: 'Singapore' },
+            { name: 'Dubai (UAE)', zone: 'Asia/Dubai', country: 'United Arab Emirates' },
+            { name: 'Sydney (Australia)', zone: 'Australia/Sydney', country: 'Australia' },
+            { name: 'Chennai / Mumbai (India)', zone: 'Asia/Kolkata', country: 'India' },
+            { name: 'São Paulo (Brazil)', zone: 'America/Sao_Paulo', country: 'Brazil' },
+            { name: 'Toronto (Canada)', zone: 'America/Toronto', country: 'Canada' },
+            { name: 'Hong Kong', zone: 'Asia/Hong_Kong', country: 'Hong Kong' },
+            { name: 'Seoul (South Korea)', zone: 'Asia/Seoul', country: 'South Korea' }
+        ];
+
+        let userClocks = [
+            { name: 'New York (USA)', zone: 'America/New_York', country: 'United States' },
+            { name: 'London (UK)', zone: 'Europe/London', country: 'United Kingdom' },
+            { name: 'Tokyo (Japan)', zone: 'Asia/Tokyo', country: 'Japan' },
+            { name: 'Chennai / Mumbai (India)', zone: 'Asia/Kolkata', country: 'India' }
+        ];
+
+        let sliderMinutes = 720; // 12:00 PM default
+
+        function initApp() {
+            const saved = localStorage.getItem('timezone_clocks');
+            if (saved) {
+                try { userClocks = JSON.parse(saved); } catch (e) {}
+            }
+            populateCitySelect();
+            renderClocks();
+            updateMeetingPlanner(sliderMinutes);
+
+            // Real-time interval ticker every second
+            setInterval(() => {
+                renderClocks();
+                updateUTCDisplay();
+            }, 1000);
+        }
+
+        function saveClocks() {
+            localStorage.setItem('timezone_clocks', JSON.stringify(userClocks));
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function updateUTCDisplay() {
+            const now = new Date();
+            const utcString = now.toLocaleTimeString('en-US', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            document.getElementById('current-utc').textContent = `UTC ${utcString}`;
+        }
+
+        function renderClocks() {
+            const grid = document.getElementById('clocks-grid');
+            const now = new Date();
+
+            grid.innerHTML = userClocks.map((c, idx) => {
+                try {
+                    const timeOpts = { timeZone: c.zone, hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true };
+                    const dateOpts = { timeZone: c.zone, weekday: 'short', month: 'short', day: 'numeric' };
+                    
+                    const timeStr = now.toLocaleTimeString('en-US', timeOpts);
+                    const dateStr = now.toLocaleDateString('en-US', dateOpts);
+                    
+                    const tzDate = new Date(now.toLocaleString('en-US', { timeZone: c.zone }));
+                    const diffHours = (tzDate - now) / (1000 * 60 * 60);
+                    const sign = diffHours >= 0 ? '+' : '';
+                    const offsetStr = `GMT ${sign}${diffHours.toFixed(1)}`;
+
+                    const hour24 = parseInt(now.toLocaleString('en-US', { timeZone: c.zone, hour: 'numeric', hour12: false }), 10);
+                    const isDay = hour24 >= 6 && hour24 < 18;
+
+                    return `
+                        <div class="bg-slate-900/80 border border-slate-800/80 rounded-3xl p-5 backdrop-blur shadow-xl flex flex-col justify-between space-y-4 group hover:border-brand-500/50 transition">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <span class="px-2.5 py-0.5 bg-brand-500/10 border border-brand-500/30 text-brand-400 text-[10px] font-semibold rounded-lg">${offsetStr}</span>
+                                    <h3 class="text-sm font-bold text-white mt-1.5">${c.name}</h3>
+                                    <p class="text-[11px] text-slate-400">${dateStr}</p>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-lg" title="${isDay ? 'Daytime' : 'Nighttime'}">${isDay ? '☀️' : '🌙'}</span>
+                                    ${userClocks.length > 1 ? `<button onclick="removeClock('${c.zone}')" class="p-1 text-slate-500 hover:text-rose-400 transition rounded-lg hover:bg-slate-800" title="Remove clock">×</button>` : ''}
+                                </div>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center shadow-inner">
+                                <span class="text-2xl font-extrabold font-mono text-white tracking-wider">${timeStr}</span>
+                            </div>
+                        </div>
+                    `;
+                } catch (e) {
+                    return '';
+                }
+            }).join('');
+        }
+
+        function removeClock(zone) {
+            userClocks = userClocks.filter(c => c.zone !== zone);
+            saveClocks();
+            renderClocks();
+            updateMeetingPlanner(sliderMinutes);
+            showToast('Clock removed.');
+        }
+
+        function openAddModal() {
+            document.getElementById('add-modal').classList.remove('hidden');
+            document.getElementById('add-modal').classList.add('flex');
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.remove('flex');
+            document.getElementById('add-modal').classList.add('hidden');
+        }
+
+        function populateCitySelect() {
+            const select = document.getElementById('new-city-select');
+            select.innerHTML = availableTimezones
+                .filter(tz => !userClocks.some(c => c.zone === tz.zone))
+                .map(tz => `<option value="${tz.zone}">${tz.name}</option>`)
+                .join('');
+        }
+
+        function handleAddCity(e) {
+            e.preventDefault();
+            const zone = document.getElementById('new-city-select').value;
+            const match = availableTimezones.find(tz => tz.zone === zone);
+            if (!match) return;
+
+            userClocks.push(match);
+            saveClocks();
+            closeAddModal();
+            renderClocks();
+            populateCitySelect();
+            updateMeetingPlanner(sliderMinutes);
+            showToast(`Added ${match.name} to world clocks!`);
+        }
+
+        function resetPlannerTime() {
+            const now = new Date();
+            const mins = now.getHours() * 60 + now.getMinutes();
+            document.getElementById('meeting-slider').value = mins;
+            updateMeetingPlanner(mins);
+        }
+
+        function updateMeetingPlanner(minutesVal) {
+            sliderMinutes = parseInt(minutesVal, 10);
+            const hours = Math.floor(sliderMinutes / 60);
+            const mins = sliderMinutes % 60;
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+            const timeFormatted = `${displayHour}:${mins.toString().padStart(2, '0')} ${ampm}`;
+            document.getElementById('planner-time-label').textContent = `${timeFormatted} (Reference)`;
+
+            const baseDate = new Date();
+            baseDate.setHours(hours, mins, 0, 0);
+
+            const resultsContainer = document.getElementById('planner-results');
+            resultsContainer.innerHTML = userClocks.map(c => {
+                try {
+                    const timeOpts = { timeZone: c.zone, hour: 'numeric', minute: '2-digit', hour12: true };
+                    const dateOpts = { timeZone: c.zone, weekday: 'short', month: 'short', day: 'numeric' };
+                    const convertedTime = baseDate.toLocaleTimeString('en-US', timeOpts);
+                    const convertedDate = baseDate.toLocaleDateString('en-US', dateOpts);
+
+                    const h24 = parseInt(baseDate.toLocaleDateString('en-US', { timeZone: c.zone, hour: 'numeric', hour12: false }), 10);
+                    const isBusinessHour = h24 >= 9 && h24 < 18;
+
+                    return `
+                        <div class="p-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <h4 class="text-xs font-bold text-slate-200">${c.name}</h4>
+                                <p class="text-[10px] text-slate-400">${convertedDate}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-sm font-bold font-mono text-white">${convertedTime}</span>
+                                <span class="block text-[10px] font-semibold ${isBusinessHour ? 'text-emerald-400' : 'text-slate-500'}">${isBusinessHour ? '🟢 Working Hours' : '🌙 Outside Hours'}</span>
+                            </div>
+                        </div>
+                    `;
+                } catch (e) {
+                    return '';
+                }
+            }).join('');
+        }
+
+        window.onload = () => {
+            initApp();
+        };
+    </script>
+</body>
+</html>
